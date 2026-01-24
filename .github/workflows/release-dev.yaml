@@ -1,50 +1,31 @@
-name: Release
+name: Release (Dev)
 
 on:
-  workflow_dispatch:
-  schedule:
-  # every sunday at 22:15am
-    - cron: "15 22 * * 0"
+  push:
+    branches:
+      - main
 
 jobs:
-  check-for-changes:
-    uses: ./.github/workflows/_check-changes.yml
   test-general:
-    if: needs.check-for-changes.outputs.has_changes == 'true'
     uses: ./.github/workflows/_tests-general.yml
-    needs:
-      - check-for-changes
   test-pc:
-    if: needs.check-for-changes.outputs.has_changes == 'true'
     uses: ./.github/workflows/_tests-platform.yml
-    needs:
-      - check-for-changes
     with:
       NAMES_PATH: PC/names
   test-console:
-    if: needs.check-for-changes.outputs.has_changes == 'true'
     uses: ./.github/workflows/_tests-platform.yml
-    needs:
-      - check-for-changes
     with:
       NAMES_PATH: Console/names
-  create-addon-zip:
-    uses: ./.github/workflows/_create-zip.yml
-    needs:
-      - test-general
-      - test-pc
-      - test-console
   create-release-notes:
     uses: ./.github/workflows/_create-release-notes.yml
     needs:
       - test-general
       - test-pc
       - test-console
-  generate-docs:
-    if: github.repository_owner == 'm00nyONE'
-    uses: ./.github/workflows/_generate-docs.yml
-    permissions:
-      contents: write
+  create-addon-zip:
+    uses: ./.github/workflows/_create-zip.yml
+    with:
+      dev_version: true
     needs:
       - test-general
       - test-pc
@@ -86,9 +67,11 @@ jobs:
           bodyFile: ${{ needs.create-release-notes.outputs.release_notes }}
           allowUpdates: true
           makeLatest: true
+          prerelease: true
+          updateOnlyUnreleased: true
 
   create-esoui-release:
-    name: "ESOUI Release"
+    name: "ESOUI Release (TEST)"
     runs-on: ubuntu-latest
     if: github.repository_owner == 'm00nyONE'
     needs:
@@ -102,7 +85,7 @@ jobs:
         with:
           name: ${{ needs.create-addon-zip.outputs.zip_pc }}
 
-      - name: Upload to ESOUI
+      - name: Upload to ESOUI (Test)
         uses: m00nyONE/esoui-upload@main
         with:
           api_key: ${{ secrets.ESOUI_API_KEY }}
@@ -111,31 +94,4 @@ jobs:
           zip_file: ${{ needs.create-addon-zip.outputs.zip_pc }}
           changelog_file: 'CHANGELOG.md'
           description_file: 'README_ESOUI.bbcode'
-
-  create-bnet-release:
-    name: "BNET Release"
-    runs-on: ubuntu-latest
-    if: github.repository_owner == 'm00nyONE'
-    needs:
-      - create-addon-zip
-      - create-release-notes
-    steps:
-      - name: Download ZIP Console
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.create-addon-zip.outputs.zip_console }}
-      - name: Download Release Notes
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.create-release-notes.outputs.release_notes }}
-
-      - name: Upload to BNET
-        uses: m00nyONE/bnet-upload@main
-        with:
-          BNET_USERNAME: ${{ secrets.BNET_USERNAME }}
-          BNET_PASSWORD: ${{ secrets.BNET_PASSWORD }}
-          addon_id: ${{ vars.BNET_ADDON_ID }}
-          version: ${{ needs.create-addon-zip.outputs.addon_version }}
-          zip_file: ${{ needs.create-addon-zip.outputs.zip_console }}
-          release_notes_file: ${{ needs.create-release-notes.outputs.release_notes }}
-          concurrency: '5'
+          test: true

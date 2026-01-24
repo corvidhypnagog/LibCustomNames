@@ -1,5 +1,8 @@
+# Pull Request Template
+
 *Please fill out the following template to help us review your pull request.
-Describe in the **Changes** section what you did. How did you test it? If you added or changed a custom name, please add a screenshot of a test in the **Testing** section so we can verify that everything follows the ToS from ZoS.*
+Describe in the **Changes** section what you did. How did you test it? If you added or changed a custom name, please add a screenshot of a test in the **Testing** section so we can verify that everything follows the ToS from ZoS.
+Remove this part of the template before submitting.*
 ---
 
 ## Platform
@@ -14,7 +17,7 @@ Describe in the **Changes** section what you did. How did you test it? If you ad
 
 Tested with:
 ```
-/hodor.share test @m00nyONE @Mobitor @seadotarley
+/hodor test @m00nyONE @Mobitor @seadotarley
 ```
 Screenshot:
 
